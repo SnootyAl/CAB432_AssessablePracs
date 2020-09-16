@@ -35,7 +35,10 @@ app.get("/api/search", (req, res) => {
   const apiVersion = "2006-03-01";
 
   const searchUrl = `https://en.wikipedia.org/w/api.php?action=parse&format=json&section=0&page=${query}`;
+
+  //Made little sense to have separate keys? Unnecessary complexity?
   const dbKey = `wikipedia:${query}`;
+
   //try cache
   return redisClient.get(dbKey, (err, result) => {
     if (result) {
@@ -82,13 +85,14 @@ app.get("/api/search", (req, res) => {
                   Key: dbKey,
                   Body: body,
                 };
-                console.log(body);
                 const uploadPromise = new AWS.S3({ apiVersion: apiVersion })
                   .putObject(objectParams)
                   .promise();
                 uploadPromise.then(function (data) {
                   console.log("Successful upload to ", bucketName, "/", dbKey);
                 });
+
+                //Return wikipedia entry
                 return res
                   .status(200)
                   .json({ source: "Wikipedia API", ...responseJSON });
@@ -109,6 +113,7 @@ function addToRedis(dbKey, responseJSON) {
     3600,
     JSON.stringify({ source: "Redis Cache", ...responseJSON })
   );
+  console.log("Successful upload to Cache:", dbKey);
 }
 
 app.get("/api/store", (req, res) => {
