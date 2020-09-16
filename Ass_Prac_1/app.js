@@ -108,9 +108,10 @@ app.get("/api/search", (req, res) => {
 });
 
 function addToRedis(dbKey, responseJSON) {
+  //Stupid timer to show working S3
   redisClient.setex(
     dbKey,
-    3600,
+    10,
     JSON.stringify({ source: "Redis Cache", ...responseJSON })
   );
   console.log("Successful upload to Cache:", dbKey);
